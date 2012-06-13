@@ -1,3 +1,4 @@
+/*jshint */
 
 require.config({
   baseUrl: "/js"

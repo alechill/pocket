@@ -1,3 +1,5 @@
+/*jshint node:true */
+
 /* A test application */
 
 var app = require('http').createServer(handler),

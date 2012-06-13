@@ -1,3 +1,4 @@
+/*jshint browser:true */
 define(['socket.io'], function(io) {
 
   "use strict";
@@ -19,7 +20,7 @@ define(['socket.io'], function(io) {
 
     init: function(connectTo){
       this.socket = io.connect(connectTo);
-      // hijack clicks
+
       document.body.addEventListener('click', __bind(this, this._onClick));
 
       if (this.hasHistory()) {
