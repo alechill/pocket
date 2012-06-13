@@ -1,0 +1,8 @@
+pushState + socket.io = pio
+
+pjax on the moon
+
+npm install socket.io
+node node/app.js
+
+http://localhost:8080
