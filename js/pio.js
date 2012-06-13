@@ -51,7 +51,7 @@ define(['socket.io'], function(io) {
     },
 
     _request: function(url, pioTarget, pioTitle) {
-      this.socket.on('pio', __bind(this, this._onContentRecieved, pioTarget, pioTitle));
+      this.socket.once('pio', __bind(this, this._onContentRecieved, pioTarget, pioTitle));
       this.socket.emit('pio', url);
     },
 
