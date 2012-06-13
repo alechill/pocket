@@ -65,7 +65,7 @@ define(['socket.io'], function(io) {
           pioTitle,
           pioTarget;
 
-      if (!href || /^[a-z]+\:\/\//.test(href) || /^#/.test(href)) return;
+      if (!href || /^#|[a-z]+\:\/\//.test(href)) return;
 
       if (originator.dataset) {
         pioTarget = originator.dataset.pioTarget;
