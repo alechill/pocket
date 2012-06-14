@@ -10,13 +10,15 @@ define(['socket.io'], function(io) {
     };
   }
 
-  function Pio(connectTo) {
+  function Pocket(connectTo) {
+    this.targetListeners = {};
     this.init(connectTo);
   }
 
-  Pio.prototype = {
+  Pocket.prototype = {
 
     socket: null,
+    targetListeners: null,
 
     init: function(connectTo){
       this.socket = io.connect(connectTo);
@@ -36,12 +38,12 @@ define(['socket.io'], function(io) {
       return !!window.history;
     },
 
-    goTo: function(url, pioTarget, pioTitle) {
+    goTo: function(url, pocketTarget, pocketTitle) {
       var state;
-      if (url && pioTarget) {
-        state = {url: url, pioTarget: pioTarget, pioTitle: pioTitle};
+      if (url && pocketTarget) {
+        state = {url: url, pocketTarget: pocketTarget, pocketTitle: pocketTitle};
         if (this.hasHistory()) {
-          window.history.pushState(state, pioTitle, url);
+          window.history.pushState(state, pocketTitle, url);
         }
         else {
 
@@ -50,9 +52,16 @@ define(['socket.io'], function(io) {
       }
     },
 
-    _request: function(url, pioTarget, pioTitle) {
-      this.socket.once('pio', __bind(this, this._onContentRecieved, pioTarget, pioTitle));
-      this.socket.emit('pio', url);
+    _request: function(url, pocketTarget, pocketTitle) {
+      var currentListener;
+      if (this.targetListeners[pocketTarget]) {
+        this.socket.removeListener(this.targetListeners[pocketTarget]);
+        delete this.targetListeners[pocketTarget];
+      }
+      // store the handler and
+      this.targetListeners[pocketTarget] = __bind(this, this._onContentRecieved, pocketTarget, pocketTitle);
+      this.socket.once('pocket', this.targetListeners[pocketTarget]);
+      this.socket.emit('pocket', url);
     },
 
     _onPopState: function(e) {
@@ -62,44 +71,44 @@ define(['socket.io'], function(io) {
     _onClick: function(e) {
       var originator = e.target,
           href = originator.getAttribute('href'),
-          pioTitle,
-          pioTarget;
+          pocketTitle,
+          pocketTarget;
 
       if (!href || /^#|[a-z]+\:\/\//.test(href)) return;
 
       if (originator.dataset) {
-        pioTarget = originator.dataset.pioTarget;
-        pioTitle = originator.dataset.pioTitle || document.title;
+        pocketTarget = originator.dataset.pocketTarget;
+        pocketTitle = originator.dataset.pocketTitle || document.title;
       }
       else {
-        pioTarget = originator.getAttribute('data-pio-target');
-        pioTitle = originator.getAttribute('data-pio-title') || document.title;
+        pocketTarget = originator.getAttribute('data-pocket-target');
+        pocketTitle = originator.getAttribute('data-pocket-title') || document.title;
       }
 
-      if (!pioTarget) return;
+      if (!pocketTarget) return;
 
       e.preventDefault();
-      this.goTo(href, pioTarget, pioTitle);
+      this.goTo(href, pocketTarget, pocketTitle);
     },
 
-    _onContentRecieved: function(pioTarget, pioTitle, content) {
-      var target = (typeof pioTarget === 'string') ? document.getElementById(pioTarget) : pioTarget;
+    _onContentRecieved: function(pocketTarget, pocketTitle, content) {
+      var target = (typeof pocketTarget === 'string') ? document.getElementById(pocketTarget) : pocketTarget;
       if (target) {
         // @TODO - before callback - used to tear down previous content related JS
         target.innerHTML = content;
         // @TODO - after callback - used to perform new content related JS
-        if (pioTitle) document.title = pioTitle;
+        if (pocketTitle) document.title = pocketTitle;
       }
     },
 
     _changeState: function(state) {
       if (state) {
-        this._request(state.url, state.pioTarget, state.pioTitle);
+        this._request(state.url, state.pocketTarget, state.pocketTitle);
       }
     }
 
   };
 
-  return Pio;
+  return Pocket;
 
 });

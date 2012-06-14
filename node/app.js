@@ -70,17 +70,17 @@ function handler (req, res) {
 
 
 io.sockets.on('connection', function (socket) {
-  socket.on('pio', function (url) {
+  socket.on('pocket', function (url) {
     var path = webroot + (/^\//.test(url) ? '' : '/') + url;
     console.log();
-    console.log('pio requested ' + url);
+    console.log('pocket requested ' + url);
     console.info(' ==> ' + path);
     fs.readFile(path, 'utf-8',
     function (err, data) {
       if (err) {
         return socket.emit('Error requesting ' + url);
       }
-      socket.emit('pio', data);
+      socket.emit('pocket', data);
     });
   });
 });

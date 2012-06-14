@@ -1,4 +1,4 @@
-pushState + socket.io = pio
+pushState + websocket = pocket
 
 pjax on the moon
 

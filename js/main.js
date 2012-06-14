@@ -10,6 +10,6 @@ define('socket.io', function(){
 });
 
 // bootstrap
-require(['pio'], function(Pio) {
-  window.pio = new Pio('http://localhost:8080');
+require(['pocket'], function(Pocket) {
+  window.pocket = new Pocket('http://localhost:8080');
 });
