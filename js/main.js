@@ -1,4 +1,3 @@
-/*jshint */
 
 require.config({
   baseUrl: "/js"
@@ -11,5 +10,12 @@ define('socket.io', function(){
 
 // bootstrap
 require(['pocket'], function(Pocket) {
-  window.pocket = new Pocket('http://localhost:8080');
+  var p = new Pocket('http://localhost:8080');
+  p.beforeReplace = function(targetEl) {
+    if( window.console ) window.console.log('before replace', targetEl);
+  };
+  p.afterReplace = function(targetEl) {
+    if( window.console ) window.console.log('after replace', targetEl);
+  };
+  window.skyRocket = p;
 });

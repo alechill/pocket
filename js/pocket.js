@@ -11,25 +11,51 @@ define(['socket.io'], function(io) {
   }
 
   function Pocket(connectTo) {
-    this.targetListeners = {};
-    this.init(connectTo);
+    this._targetListeners = {};
+    this.connectTo = connectTo;
+    this.connect(this.connectTo);
   }
 
   Pocket.prototype = {
 
     socket: null,
-    targetListeners: null,
+    connectTo: null,
 
-    init: function(connectTo){
-      this.socket = io.connect(connectTo);
+    _boundOnClick: null,
+    _boundOnPopState: null,
 
-      document.body.addEventListener('click', __bind(this, this._onClick));
+    _targetListeners: null,
+
+    beforeReplace: function(targetEl) {},
+    afterReplace: function(targetEl) {},
+
+    connect: function(connectTo){
+      this.socket = io.connect(connectTo, {'force new connection': true});
+
+      this._boundOnClick = __bind(this, this._onClick);
+      document.body.addEventListener('click', this._boundOnClick);
 
       if (this.hasHistory()) {
-        window.addEventListener('popstate', __bind(this, this._onPopState));
+        this._boundOnPopState = __bind(this, this._onPopState);
+        window.addEventListener('popstate', this._boundOnPopState);
       }
       else {
         // @TODO - until hashchange and iframe fallbacks are inplemented - fallback to standard http
+        return;
+      }
+    },
+
+    disconnect: function(){
+      this.socket.disconnect();
+
+      document.body.removeEventListener('click', this._boundOnClick);
+      delete this._boundOnClick;
+
+      if (this.hasHistory()) {
+        window.removeEventListener('popstate', this._boundOnPopState);
+        delete this._boundOnPopState;
+      }
+      else {
         return;
       }
     },
@@ -46,7 +72,7 @@ define(['socket.io'], function(io) {
           window.history.pushState(state, pocketTitle, url);
         }
         else {
-
+          return;
         }
         this._changeState(state);
       }
@@ -54,13 +80,13 @@ define(['socket.io'], function(io) {
 
     _request: function(url, pocketTarget, pocketTitle) {
       var currentListener;
-      if (this.targetListeners[pocketTarget]) {
-        this.socket.removeListener(this.targetListeners[pocketTarget]);
-        delete this.targetListeners[pocketTarget];
+      if (this._targetListeners[pocketTarget]) {
+        this.socket.removeListener(this._targetListeners[pocketTarget]);
+        delete this._targetListeners[pocketTarget];
       }
       // store the handler and
-      this.targetListeners[pocketTarget] = __bind(this, this._onContentRecieved, pocketTarget, pocketTitle);
-      this.socket.once('pocket', this.targetListeners[pocketTarget]);
+      this._targetListeners[pocketTarget] = __bind(this, this._onContentRecieved, pocketTarget, pocketTitle);
+      this.socket.once('pocket', this._targetListeners[pocketTarget]);
       this.socket.emit('pocket', url);
     },
 
@@ -94,9 +120,11 @@ define(['socket.io'], function(io) {
     _onContentRecieved: function(pocketTarget, pocketTitle, content) {
       var target = (typeof pocketTarget === 'string') ? document.getElementById(pocketTarget) : pocketTarget;
       if (target) {
-        // @TODO - before callback - used to tear down previous content related JS
+        // before callback - use this to tear down previous content related JS
+        this.beforeReplace(target);
         target.innerHTML = content;
-        // @TODO - after callback - used to perform new content related JS
+        // after callback - use this to perform new content related JS
+        this.afterReplace(target);
         if (pocketTitle) document.title = pocketTitle;
       }
     },
