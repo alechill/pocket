@@ -3,6 +3,6 @@ pushState + websocket = pocket
 pjax on the moon
 
 npm install socket.io
-node node/app.js
+node demo/app.js
 
 http://localhost:8080

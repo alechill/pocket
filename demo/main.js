@@ -1,6 +1,5 @@
-
 require.config({
-  baseUrl: "/js"
+  baseUrl: "js"
 });
 
 // @TODO - socket.io is in CommonJS format, wrap in AMD manually until can get it working with require.js
@@ -11,11 +10,11 @@ define('socket.io', function(){
 // bootstrap
 require(['pocket'], function(Pocket) {
   var p = new Pocket('http://localhost:8080');
-  p.beforeReplace = function(targetEl, data) {
-    if( window.console ) window.console.log('before replace', targetEl, data);
+  p.beforeReplace = function(target, data) {
+    if( window.console ) window.console.log('before replace', target, data);
   };
-  p.afterReplace = function(targetEl, data) {
-    if( window.console ) window.console.log('after replace', targetEl, data);
+  p.afterReplace = function(target, data) {
+    if( window.console ) window.console.log('after replace', target, data);
   };
   window.skyRocket = p;
 });

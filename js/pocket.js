@@ -26,8 +26,8 @@ define(['socket.io'], function(io) {
 
     _targetListeners: null,
 
-    beforeReplace: function(targetEl) {},
-    afterReplace: function(targetEl) {},
+    beforeReplace: function(target, data) {},
+    afterReplace: function(target, data) {},
 
     connect: function(connectTo){
       this.socket = io.connect(connectTo, {'force new connection': true});
@@ -64,12 +64,12 @@ define(['socket.io'], function(io) {
       return !!window.history;
     },
 
-    goTo: function(url, pocketTarget, pocketTitle, data) {
+    goTo: function(url, target, title, data) {
       var state;
-      if (url && pocketTarget) {
-        state = {url: url, pocketTarget: pocketTarget, pocketTitle: pocketTitle, data: data || {}};
+      if (url && target) {
+        state = {url: url, target: target, title: title, data: data || {}};
         if (this.hasHistory()) {
-          window.history.pushState(state, pocketTitle, url);
+          window.history.pushState(state, title, url);
         }
         else {
           return;
@@ -78,15 +78,15 @@ define(['socket.io'], function(io) {
       }
     },
 
-    _request: function(url, pocketTarget, pocketTitle, data) {
+    _request: function(url, target, title, data) {
       var currentListener;
-      if (this._targetListeners[pocketTarget]) {
-        this.socket.removeListener(this._targetListeners[pocketTarget]);
-        delete this._targetListeners[pocketTarget];
+      if (this._targetListeners[target]) {
+        this.socket.removeListener(this._targetListeners[target]);
+        delete this._targetListeners[target];
       }
       // store the handler and
-      this._targetListeners[pocketTarget] = __bind(this, this._onContentRecieved, pocketTarget, pocketTitle, data || {});
-      this.socket.once('pocket', this._targetListeners[pocketTarget]);
+      this._targetListeners[target] = __bind(this, this._onContentRecieved, target, title, data || {});
+      this.socket.once('pocket', this._targetListeners[target]);
       this.socket.emit('pocket', url);
     },
 
@@ -95,50 +95,50 @@ define(['socket.io'], function(io) {
     },
 
     _onClick: function(e) {
-      var originator = e.target,
-          href = originator.getAttribute('href'),
-          pocketTitle,
-          pocketTarget,
+      var trigger = e.target,
+          href = trigger.getAttribute('href'),
           data = {},
+          title,
+          target,
           prop;
 
       if (!href || /^#|[a-z]+\:\/\//.test(href)) return;
 
-      if (originator.dataset) {
-        pocketTarget = originator.dataset.pocketTarget;
-        pocketTitle = originator.dataset.pocketTitle || document.title;
-        for (prop in originator.dataset) {
-          if (originator.dataset.hasOwnProperty(prop)) {
-            data[prop] = originator.dataset[prop];
+      if (trigger.dataset) {
+        target = trigger.dataset.pocketTarget;
+        title = trigger.dataset.pocketTitle || document.title;
+        for (prop in trigger.dataset) {
+          if (trigger.dataset.hasOwnProperty(prop)) {
+            data[prop] = trigger.dataset[prop];
           }
         }
       }
       else {
-        pocketTarget = originator.getAttribute('data-pocket-target');
-        pocketTitle = originator.getAttribute('data-pocket-title') || document.title;
+        target = trigger.getAttribute('data-pocket-target');
+        title = trigger.getAttribute('data-pocket-title') || document.title;
       }
 
-      if (!pocketTarget) return;
+      if (!target) return;
 
       e.preventDefault();
-      this.goTo(href, pocketTarget, pocketTitle, data);
+      this.goTo(href, target, title, data);
     },
 
-    _onContentRecieved: function(pocketTarget, pocketTitle, data, content) {
-      var target = (typeof pocketTarget === 'string') ? document.getElementById(pocketTarget) : pocketTarget;
+    _onContentRecieved: function(target, title, data, content) {
+      target = (typeof target === 'string') ? document.getElementById(target) : target;
       if (target) {
         // before callback - use this to tear down previous content related JS
         this.beforeReplace(target, data);
         target.innerHTML = content;
         // after callback - use this to perform new content related JS
         this.afterReplace(target, data);
-        if (pocketTitle) document.title = pocketTitle;
+        if (title) document.title = title;
       }
     },
 
     _changeState: function(state) {
       if (state) {
-        this._request(state.url, state.pocketTarget, state.pocketTitle, state.data);
+        this._request(state.url, state.target, state.title, state.data);
       }
     }
 
