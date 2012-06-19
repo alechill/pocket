@@ -11,11 +11,11 @@ define('socket.io', function(){
 // bootstrap
 require(['pocket'], function(Pocket) {
   var p = new Pocket('http://localhost:8080');
-  p.beforeReplace = function(targetEl) {
-    if( window.console ) window.console.log('before replace', targetEl);
+  p.beforeReplace = function(targetEl, data) {
+    if( window.console ) window.console.log('before replace', targetEl, data);
   };
-  p.afterReplace = function(targetEl) {
-    if( window.console ) window.console.log('after replace', targetEl);
+  p.afterReplace = function(targetEl, data) {
+    if( window.console ) window.console.log('after replace', targetEl, data);
   };
   window.skyRocket = p;
 });

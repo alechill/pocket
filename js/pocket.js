@@ -64,10 +64,10 @@ define(['socket.io'], function(io) {
       return !!window.history;
     },
 
-    goTo: function(url, pocketTarget, pocketTitle) {
+    goTo: function(url, pocketTarget, pocketTitle, data) {
       var state;
       if (url && pocketTarget) {
-        state = {url: url, pocketTarget: pocketTarget, pocketTitle: pocketTitle};
+        state = {url: url, pocketTarget: pocketTarget, pocketTitle: pocketTitle, data: data || {}};
         if (this.hasHistory()) {
           window.history.pushState(state, pocketTitle, url);
         }
@@ -78,14 +78,14 @@ define(['socket.io'], function(io) {
       }
     },
 
-    _request: function(url, pocketTarget, pocketTitle) {
+    _request: function(url, pocketTarget, pocketTitle, data) {
       var currentListener;
       if (this._targetListeners[pocketTarget]) {
         this.socket.removeListener(this._targetListeners[pocketTarget]);
         delete this._targetListeners[pocketTarget];
       }
       // store the handler and
-      this._targetListeners[pocketTarget] = __bind(this, this._onContentRecieved, pocketTarget, pocketTitle);
+      this._targetListeners[pocketTarget] = __bind(this, this._onContentRecieved, pocketTarget, pocketTitle, data || {});
       this.socket.once('pocket', this._targetListeners[pocketTarget]);
       this.socket.emit('pocket', url);
     },
@@ -98,13 +98,20 @@ define(['socket.io'], function(io) {
       var originator = e.target,
           href = originator.getAttribute('href'),
           pocketTitle,
-          pocketTarget;
+          pocketTarget,
+          data = {},
+          prop;
 
       if (!href || /^#|[a-z]+\:\/\//.test(href)) return;
 
       if (originator.dataset) {
         pocketTarget = originator.dataset.pocketTarget;
         pocketTitle = originator.dataset.pocketTitle || document.title;
+        for (prop in originator.dataset) {
+          if (originator.dataset.hasOwnProperty(prop)) {
+            data[prop] = originator.dataset[prop];
+          }
+        }
       }
       else {
         pocketTarget = originator.getAttribute('data-pocket-target');
@@ -114,24 +121,24 @@ define(['socket.io'], function(io) {
       if (!pocketTarget) return;
 
       e.preventDefault();
-      this.goTo(href, pocketTarget, pocketTitle);
+      this.goTo(href, pocketTarget, pocketTitle, data);
     },
 
-    _onContentRecieved: function(pocketTarget, pocketTitle, content) {
+    _onContentRecieved: function(pocketTarget, pocketTitle, data, content) {
       var target = (typeof pocketTarget === 'string') ? document.getElementById(pocketTarget) : pocketTarget;
       if (target) {
         // before callback - use this to tear down previous content related JS
-        this.beforeReplace(target);
+        this.beforeReplace(target, data);
         target.innerHTML = content;
         // after callback - use this to perform new content related JS
-        this.afterReplace(target);
+        this.afterReplace(target, data);
         if (pocketTitle) document.title = pocketTitle;
       }
     },
 
     _changeState: function(state) {
       if (state) {
-        this._request(state.url, state.pocketTarget, state.pocketTitle);
+        this._request(state.url, state.pocketTarget, state.pocketTitle, state.data);
       }
     }
 
